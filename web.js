@@ -1,5 +1,6 @@
 // Define routes for simple SSJS web app. 
 // Writes Coinbase orders to database.
+// Write Social shares to database.
 var async   = require('async')
   , express = require('express')
   , fs      = require('fs')
@@ -69,6 +70,21 @@ app.get('/refresh_orders', function(request, response) {
 
 });
 
+// Render example.com/shares
+app.get('/shares', function(request, response) {
+  global.db.Order.findAll().success(function(shares) {
+    var shares_json = [];
+    shares.forEach(function(share) {
+      shares_json.push({id: share.network_id, hits: share.hits, time: share.time});
+    });
+    // Uses views/shares.ejs
+    response.render("shares", {shares: shares_json});
+  }).error(function(err) {
+    console.log(err);
+    response.send("error retrieving shares");
+  });
+});
+
 // sync the database and start the server
 db.sequelize.sync().complete(function(err) {
   if (err) {
@@ -101,6 +117,36 @@ var addOrder = function(order_obj, callback) {
           time: order.created_at
         });
           new_order_instance.save().success(function() {
+          callback();
+        }).error(function(err) {
+          callback(err);
+        });
+      }
+    });
+  }
+};
+
+// add share to the database if it doesn't already exist
+var addShare = function(share_obj, callback) {
+  var share = share_obj.order; // order json from coinbase
+  if (share.status != "completed") {
+    // only add completed orders
+    callback();
+  } else {
+    var Share = global.db.Share;
+    // find if order has already been added to our database
+    Share.find({where: {network_id: share.id}}).success(function(share_instance) {
+      if (share_instance) {
+        // order already exists, do nothing
+        callback();
+      } else {
+        // build instance and save
+          var new_share_instance = Share.build({
+          network_id: share.id,
+          hits: 1, // one click
+          time: share.created_at
+        });
+          new_share_instance.save().success(function() {
           callback();
         }).error(function(err) {
           callback(err);
