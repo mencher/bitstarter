@@ -11,7 +11,7 @@ var async   = require('async')
 var app = express();
 app.set('views', __dirname + '/views');
 app.set('view engine', 'ejs');
-app.set('port', process.env.PORT || 8080);
+app.set('port', process.env.PORT || 5000);
 
 // Render homepage (note trailing slash): example.com/
 app.get('/', function(request, response) {
