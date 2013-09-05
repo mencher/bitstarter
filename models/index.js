@@ -39,7 +39,7 @@ if (!global.hasOwnProperty('db')) {
             dialect:  'postgres',
             protocol: 'postgres',
             port:     port,
-            host:     host,
+            host:     host
         };
         var sq = new Sequelize(dbname, user, password, config);
     }
